@@ -51,10 +51,12 @@ button:active{transform:translateY(3px);background:linear-gradient(#ffe36a,#ffb3
 #ov input,#iv input{box-shadow:inset 0 2px 4px #0004,0 3px 0 #ffffff66;font-weight:700}
 .lvb{border-radius:18px;box-shadow:inset 0 2px 0 #fffb,0 5px 0 #0005,0 8px 10px #0005;text-shadow:0 2px 0 #0007;font-size:.8rem}.lvb:disabled{opacity:.55}.lvb b{font-size:1.7rem;font-weight:400}
 @media (max-height:480px){#ov h1,#lvm h2,#iv h2{font-size:1.7rem}.big{font-size:1.1rem}}
+.updw{margin-top:8px;font-size:.85rem;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;text-shadow:0 1px 3px #000a}.updt.updok{color:#9dff7a}.updt.updnew{color:#ffd54a}.sm{height:34px!important;width:auto!important;padding:0 14px!important;font-size:.8rem!important}
 </style></head><body>
 <canvas id="g3"></canvas><canvas id="c"></canvas>
 <div id="hud"><div id="h1"></div><div id="bar"><i id="bi"></i></div><div id="h2"></div></div>
-<div id="tt"></div><div id="lvm" style="display:none;position:fixed;inset:0;z-index:6;background:#120f1df5;flex-direction:column;padding:10px 12px;gap:6px;overflow:hidden"><h2 style="margin:0;text-align:center">Select level</h2><p id="lvi" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><p id="lvf" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><div id="lvg" style="flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;align-content:start"></div><div style="display:flex;gap:8px;justify-content:center"><button class="big" id="lvmore" style="margin:0">More levels</button><button class="big" id="inv2" style="margin:0;background:#25d366">Invite friends</button></div></div>
+<div id="tt"></div><div id="lvm" style="display:none;position:fixed;inset:0;z-index:6;background:#120f1df5;flex-direction:column;padding:10px 12px;gap:6px;overflow:hidden"><h2 style="margin:0;text-align:center">Select level</h2><p id="lvi" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><p id="lvf" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><div id="lvg" style="flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;align-content:start"></div><div class="updw"><span class="updt">Version</span><button class="updb sm">Check update</button></div>
+<div style="display:flex;gap:8px;justify-content:center"><button class="big" id="lvmore" style="margin:0">More levels</button><button class="big" id="inv2" style="margin:0;background:#25d366">Invite friends</button></div></div>
 <button id="mnb" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:84px;height:40px;padding:0 12px;font-size:.75rem;z-index:3">MENU</button><div id="lvb" style="display:none;position:fixed;inset:0;z-index:7;background:#0b1a2ccc;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none"><div id="lvt" style="font-size:2rem;font-weight:800"></div><div id="lvs" style="font-size:1.1rem;margin-top:8px"></div></div><div id="cl"></div>
 <div id="cr"><input id="ci" maxlength="80" placeholder="Warn your team…"><button id="cs" style="height:44px;width:70px">Send</button></div>
 <div id="js"><div id="kn"></div></div>
@@ -66,7 +68,7 @@ button:active{transform:translateY(3px);background:linear-gradient(#ffe36a,#ffb3
 <div id="ov"><h1>Bunk Escape</h1>
 <p>Escape the college with your team! Teachers chase you. Find a hammer, break the ice blocks for mystery tools, find the gate key and reach the gate. Then dodge cars, dogs and nosy neighbours, and get home!</p>
 <p style="opacity:.75">Joystick = move · drag the screen to turn the camera · RUN uses stamina · eat at the canteen · pull a fire alarm to free caught friends</p>
-<input id="nm" placeholder="Your name" maxlength="12"><input id="rc" placeholder="Room code (same as your friends)" maxlength="10" style="margin-top:0"><button class="big" id="go">Play</button><button class="big" id="inv0" style="background:#25d366">Invite friends</button></div>
+<input id="nm" placeholder="Your name" maxlength="12"><input id="rc" placeholder="Room code (same as your friends)" maxlength="10" style="margin-top:0"><button class="big" id="go">Play</button><button class="big" id="inv0" style="background:#25d366">Invite friends</button><div class="updw"><span class="updt">Version</span><button class="updb sm">Check update</button></div></div>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.3.4/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -156,9 +158,19 @@ function startLevel(n){lvBusy=1;lvT=-1;LV=n;if(n>BESTLV){BESTLV=n;try{localStora
   pm={};tmz=[];PV={};imesh={};TR=new Set();ABL=[];RF=[];CARM=null;try{build3D()}catch(e){RN=null}}
  $('lvm').style.display='none';toast('Level '+n+': '+NAMES[THEME]+'. '+tc.length+' enemies are out.');started=1;lvBusy=0}
 
+const VERSION='v13 2026-11-19';let UPDNEW=false;
+function updUI(txt,cls,btn){document.querySelectorAll('.updt').forEach(e=>{e.textContent=txt;e.className='updt '+cls});document.querySelectorAll('.updb').forEach(e=>{e.textContent=btn})}
+async function checkUpdate(){updUI('Checking for updates...','','Please wait');
+ try{const u=location.href.split('#')[0].split('?')[0],r=await fetch(u+'?nocache='+Date.now(),{cache:'no-store'}),t=await r.text(),m=t.match(/const VERSION='([^']*)'/);
+  if(m&&m[1]!==VERSION){UPDNEW=true;updUI('New version available ('+m[1]+'). You have '+VERSION+'.','updnew','Update now')}
+  else{UPDNEW=false;updUI('Updated \u2713 ('+VERSION+')','updok','Check again')}}
+ catch(e){updUI('Version '+VERSION+' (could not check)','','Check again')}}
+function updClick(){if(UPDNEW)location.href=location.href.split('#')[0].split('?')[0]+'?u='+Date.now()+location.hash;else checkUpdate()}
+document.querySelectorAll('.updb').forEach(b=>{b.onclick=updClick});checkUpdate();
 function completeLevel(){UNL=Math.max(UNL,LV+1);try{localStorage.setItem('bunkUnl',UNL)}catch(e){}started=0;lvT=-1;$('lvb').style.display='none';showMenu()}
 function menuInfo(){const f=room?room.peers().filter(p=>!p.isMe&&p.presence&&(p.presence.lv||0)>0):[];
  $('lvf').textContent=room?(f.length?'Friends playing now: '+f.map(p=>'Level '+(p.presence.lv||1)).join(', '):'Team connected. No friend is in a level yet.'):(($('rc').value||'').trim()?'Connecting to your team...':'Solo mode');
+ {const od=room?room.peers().filter(p=>!p.isMe&&p.presence&&p.presence.ver&&p.presence.ver!==VERSION).length:0;if(od)$('lvf').textContent+=' · '+od+' friend(s) have a different version. Everyone tap Update now.'}
  $('lvi').textContent='Unlocked up to level '+UNL+'. Pick the same level as your friends.'}
 function showMenu(){$('lvm').style.display='flex';renderMenu()}
 function renderMenu(){const g=$('lvg');g.innerHTML='';const top=Math.max(menuN,UNL+4);
@@ -172,7 +184,7 @@ setInterval(()=>{if($('lvm').style.display==='flex')menuInfo()},2000);
 const peers=()=>{const a=room?room.peers():[{isMe:true,peer:'me',presence:pres()}];PLV=0;a.forEach(p=>{const v=p.presence&&p.presence.lv||1;if(v>PLV)PLV=v});return a.filter(p=>p.isMe||(p.presence.lv||1)===LV)};
 const hostId=()=>{const v=peers().filter(p=>p.kind!=='agent').map(p=>p.peer).sort();return v[0]};
 let myPeer=null;const isHost=()=>{if(!room)return true;const v=peers().filter(p=>p.kind!=='agent').map(p=>p.peer).sort();return myPeer?v[0]===myPeer:v.length===0};
-function pres(){const o={lv:LV,n:me.n,x:+me.x.toFixed(2),y:+me.y.toFixed(2),l:me.l,j:me.j,k:me.k,esc:me.esc,e:me.e,e2:me.e2,g:me.g,m:me.m,al:me.al,u:me.u,h:me.gh>0?1:0};
+function pres(){const o={ver:VERSION,lv:LV,n:me.n,x:+me.x.toFixed(2),y:+me.y.toFixed(2),l:me.l,j:me.j,k:me.k,esc:me.esc,e:me.e,e2:me.e2,g:me.g,m:me.m,al:me.al,u:me.u,h:me.gh>0?1:0};
  if(isHost())o.t=tc.map(t=>[+t.x.toFixed(2),+t.y.toFixed(2),t.ty,t.ch|(t.st>0?2:0)]);return o}
 function bfs(sx,sy,tx,ty,ban){const q=[[sx,sy]],par={},key=(a,b)=>a*256+b;par[key(sx,sy)]=-1;
  for(let qi=0;qi<q.length;qi++){const[a,b]=q[qi];if(a===tx&&b===ty)break;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=a+dx,ny=b+dy,k=key(nx,ny);if(par[k]===undefined&&ok(nx,ny,ban)){par[k]=key(a,b);q.push([nx,ny])}}}
