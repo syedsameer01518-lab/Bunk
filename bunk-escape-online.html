@@ -77,8 +77,16 @@ button:active{transform:translateY(3px);background:linear-gradient(#ffe36a,#ffb3
 #bt{grid-template-columns:repeat(3,clamp(44px,11vh,54px));gap:5px}
 #bt button{height:clamp(40px,10vh,48px);font-size:.7rem}
 @media (orientation:portrait){#js{width:118px;height:118px;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}#bt{grid-template-columns:repeat(2,58px);gap:6px;bottom:calc(30px + env(safe-area-inset-bottom,0px))}#bt button{height:46px;font-size:.72rem}#tt{top:calc(64px + env(safe-area-inset-top,0px))}#cl{top:calc(100px + env(safe-area-inset-top,0px))}#cr{bottom:calc(170px + env(safe-area-inset-bottom,0px))}}
+
+/* minimap */
+#mm{display:none;position:fixed;inset:auto;left:calc(6px + env(safe-area-inset-left,0px));top:calc(6px + env(safe-area-inset-top,0px));width:clamp(84px,24vh,108px);height:clamp(84px,24vh,108px);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 10px #0008,inset 0 0 8px #0006;z-index:2;background:#0b0e1c}
+#hud{left:calc(clamp(84px,24vh,108px) + 16px + env(safe-area-inset-left,0px));max-width:calc(100% - clamp(84px,24vh,108px) - 24px)}
+#mnb,#inv1{top:calc(70px + env(safe-area-inset-top,0px))!important}
+#tt{top:calc(122px + env(safe-area-inset-top,0px));left:8px;right:8px}
+#cl{top:calc(156px + env(safe-area-inset-top,0px))}
 </style></head><body>
 <canvas id="g3"></canvas><canvas id="c"></canvas>
+<canvas id="mm" width="216" height="216"></canvas>
 <div id="hud"><div id="h1"></div><div id="bar"><i id="bi"></i></div><div id="h2"></div></div>
 <div id="tt"></div><div id="lvm" style="display:none;position:fixed;inset:0;z-index:6;background:#120f1df5;flex-direction:column;padding:10px 12px;gap:6px;overflow:hidden"><h2 style="margin:0;text-align:center">Select level</h2><p id="lvi" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><p id="lvf" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><div id="lvg" style="flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;align-content:start"></div><div class="updw"><span class="updt">Version</span><button class="updb sm">Check update</button></div>
 <div style="display:flex;gap:8px;justify-content:center"><button class="big" id="lvmore" style="margin:0">More levels</button><button class="big" id="inv2" style="margin:0;background:#25d366">Invite friends</button></div></div>
@@ -181,9 +189,9 @@ function startLevel(n){lvBusy=1;lvT=-1;LV=n;if(n>BESTLV){BESTLV=n;try{localStora
  genLevel(n);gone.clear();items=[];mark=null;mkItems();initT();spawnMe(RAWN);t0=performance.now();
  if(window.THREE){try{if(scene)scene.traverse(o=>{if(o.geometry)o.geometry.dispose();const m=o.material;if(m)(Array.isArray(m)?m:[m]).forEach(q=>{if(q.map)q.map.dispose();q.dispose()})})}catch(e){}
   pm={};tmz=[];PV={};imesh={};TR=new Set();ABL=[];RF=[];CARM=null;try{build3D()}catch(e){RN=null}}
- $('lvm').style.display='none';toast('Level '+n+': '+NAMES[THEME]+'. '+tc.length+' enemies are out.');started=1;lvBusy=0}
+ $('lvm').style.display='none';toast('Level '+n+': '+NAMES[THEME]+'. '+tc.length+' enemies are out.');$('mm').style.display='block';started=1;lvBusy=0}
 
-const VERSION='v15 2026-11-19';let UPDNEW=false;
+const VERSION='v16 2026-11-19';let UPDNEW=false;
 function updUI(txt,cls,btn){document.querySelectorAll('.updt').forEach(e=>{e.textContent=txt;e.className='updt '+cls});document.querySelectorAll('.updb').forEach(e=>{e.textContent=btn})}
 async function checkUpdate(){updUI('Checking for updates...','','Please wait');
  try{const u=location.href.split('#')[0].split('?')[0],r=await fetch(u+'?nocache='+Date.now(),{cache:'no-store'}),t=await r.text(),m=t.match(/const VERSION='([^']*)'/);
@@ -197,7 +205,7 @@ function menuInfo(){const f=room?room.peers().filter(p=>!p.isMe&&p.presence&&(p.
  $('lvf').textContent=room?(f.length?'Friends playing now: '+f.map(p=>'Level '+(p.presence.lv||1)).join(', '):'Team connected. No friend is in a level yet.'):(($('rc').value||'').trim()?'Connecting to your team...':'Solo mode');
  {const od=room?room.peers().filter(p=>!p.isMe&&p.presence&&p.presence.ver&&p.presence.ver!==VERSION).length:0;if(od)$('lvf').textContent+=' · '+od+' friend(s) have a different version. Everyone tap Update now.'}
  $('lvi').textContent='Unlocked up to level '+UNL+'. Pick the same level as your friends.'}
-function showMenu(){$('lvm').style.display='flex';renderMenu()}
+function showMenu(){$('mm').style.display='none';$('lvm').style.display='flex';renderMenu()}
 function renderMenu(){const g=$('lvg');g.innerHTML='';const top=Math.max(menuN,UNL+4);
  for(let n=1;n<=top;n++){const lock=n>UNL,b=document.createElement('button'),a=document.createElement('b'),c=document.createElement('span');
   b.className='lvb';b.disabled=lock;b.style.background=lock?'linear-gradient(#9aa3b5,#5c6578)':'linear-gradient('+TCOL[(n-1)%5][0]+','+TCOL[(n-1)%5][1]+')';a.textContent=n;c.textContent=lock?'Locked':NAMES[(n-1)%5]+' \u00b7 tier '+(((n-1)/5|0)+1);b.append(a,c);
@@ -321,6 +329,21 @@ function hud(){let d=1e9,key=1e9;items.forEach(it=>{if(gone.has(it.id))return;co
  $('h2').textContent=h;
  if(me.esc&&escd===alive&&alive>0){if(lvT<0&&!lvBusy)lvT=4}
  else if(me.esc)toast('You’re out! Wait for your team…')}
+function drawMini(){const c=$('mm'),g=c.getContext('2d'),S=c.width,R=17,tp=S/(2*R+1),mx=me.x,my=me.y,x0=mx|0,y0=my|0,ang=-Math.PI/2-yaw;
+ g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,S,S);g.save();g.beginPath();g.arc(S/2,S/2,S/2-2,0,7);g.clip();g.fillStyle='#0b0e1c';g.fillRect(0,0,S,S);
+ g.translate(S/2,S/2);g.rotate(ang);
+ for(let dy=-R-3;dy<=R+3;dy++)for(let dx=-R-3;dx<=R+3;dx++){const tx=x0+dx,ty=y0+dy,r=M[ty];if(!r)continue;const ch=r[tx];if(!ch)continue;g.fillStyle=ch==='#'?'#39406a':(COL[ch]||'#888');g.fillRect((tx-mx)*tp,(ty-my)*tp,tp+.6,tp+.6)}
+ const dot=(x,y,col,r)=>{g.fillStyle=col;g.beginPath();g.arc((x-mx)*tp,(y-my)*tp,r,0,7);g.fill()};
+ AL.forEach(a=>dot(a[0]+.5,a[1]+.5,'#ff3b30',4));CP.forEach(q=>dot(q[0]+.5,q[1]+.5,'#34c759',3.5));
+ tr.forEach(o=>{if(Math.hypot(o.x-mx,o.y-my)<9)dot(o.x,o.y,o.ty==='D'?'#ff9500':'#ff2d55',4)});
+ P.forEach(p=>{if(!p.isMe)dot(p.presence.x,p.presence.y,'#7cff6b',4.5)});
+ if(mark)dot(mark[0],mark[1],'#ffffff',4);
+ g.setTransform(1,0,0,1,0,0);
+ const goal=(x,y,col,lab)=>{let dx=(x-mx)*tp,dy=(y-my)*tp;const sx0=dx*Math.cos(ang)-dy*Math.sin(ang),sy0=dx*Math.sin(ang)+dy*Math.cos(ang),d=Math.hypot(sx0,sy0),lim=S/2-14;let sx=sx0,sy=sy0;if(d>lim){sx*=lim/d;sy*=lim/d}
+  g.fillStyle=col;g.beginPath();g.arc(S/2+sx,S/2+sy,9,0,7);g.fill();g.fillStyle='#fff';g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(lab,S/2+sx,S/2+sy+1)};
+ if(!me.out)goal(10.5,25.5+YS,'#e6a700','G');goal(HX,HR0+.5,'#ff5722','H');
+ g.fillStyle='#fff';g.beginPath();g.moveTo(S/2,S/2-10);g.lineTo(S/2-7,S/2+7);g.lineTo(S/2+7,S/2+7);g.closePath();g.fill();g.strokeStyle='#3df2ff';g.lineWidth=2.5;g.beginPath();g.arc(S/2,S/2,12,0,7);g.stroke();
+ g.restore()}
 function showMap(){const mc=$('mc'),s=Math.max(4,Math.floor(Math.min(innerWidth*.9/CW,innerHeight*.55/CH)*mz));mc.width=CW*s;mc.height=CH*s;mc.style.width=CW*s+'px';mc.style.height=CH*s+'px';const c=mc.getContext('2d');
  for(let y=0;y<CH;y++)for(let i=0;i<CW;i++){c.fillStyle=COL[M[y][i]];c.fillRect(i*s,y*s,s,s)}
  c.fillStyle='#1976d2';c.beginPath();c.arc(me.x*s,me.y*s,Math.max(3,s*.7),0,7);c.fill();c.textAlign='center';c.textBaseline='middle';
@@ -529,11 +552,11 @@ let last=0,pt=0;function loop(n){requestAnimationFrame(loop);if(!started)return;
  {const lb=$('lvb');if(lvT>=0){lb.style.display='flex';$('lvt').textContent='LEVEL '+LV+' COMPLETE';$('lvs').textContent='Next level in '+Math.ceil(lvT)+' s'}else if(lb.style.display!=='none')lb.style.display='none'}
  if(room&&!myPeer){const m=P.find(p=>p.isMe&&p.sameTab);if(m)myPeer=m.peer}
  P.forEach(p=>{if(p.presence.g)p.presence.g.forEach(i=>gone.add(i))});
- if(isHost())simT(dt);step(dt);alarmChk();chatUpd();hud();draw(n/1e3);
+ if(isHost())simT(dt);step(dt);alarmChk();chatUpd();hud();draw(n/1e3);drawMini();
  pt+=dt;if(pt>.1){pt=0;if(room)room.presence(pres()).catch(()=>{})}}
 function bind(b,on,off){b.addEventListener('pointerdown',e=>{e.preventDefault();on()});if(off)['pointerup','pointerleave','pointercancel'].forEach(k=>b.addEventListener(k,off))}
 bind($('bu'),use);bind($('br'),()=>runB=1,()=>runB=0);bind($('bk'),useTool);bind($('bm'),showMap);
-$('mx').onclick=()=>$('mp').style.display='none';$('mzp').onclick=()=>{mz=Math.min(8,mz*1.5);showMap()};$('mzm').onclick=()=>{mz=Math.max(1,mz/1.5);showMap()};$('bz').onclick=()=>{cd=cd>6?3.2:cd>4?7.5:4.4};
+$('mx').onclick=()=>$('mp').style.display='none';$('mm').onclick=showMap;$('mzp').onclick=()=>{mz=Math.min(8,mz*1.5);showMap()};$('mzm').onclick=()=>{mz=Math.max(1,mz/1.5);showMap()};$('bz').onclick=()=>{cd=cd>6?3.2:cd>4?7.5:4.4};
 let LINK=location.href.split('#')[0],MSG='Join me in Bunk Escape! Open this link and tap Start: ';
 const ivo=()=>{let c=($('rc').value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(!c){c=Math.random().toString(36).slice(2,7);$('rc').value=c}LINK=location.href.split('#')[0]+'#'+c;$('ivl').value=LINK;$('ivt').textContent='';$('iv').style.display='flex'};
 $('inv0').onclick=ivo;$('inv1').onclick=ivo;$('inv2').onclick=ivo;$('ivx').onclick=()=>{$('iv').style.display='none'};
