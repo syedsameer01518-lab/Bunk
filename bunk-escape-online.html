@@ -222,7 +222,7 @@ function startLevel(n){lvBusy=1;lvT=-1;LV=n;if(n>BESTLV){BESTLV=n;try{localStora
  $('lvm').style.display='none';toast(lvInfo(n).label+': '+NAMES[THEME]+'. '+tc.length+' enemies are out.');$('mm').style.display='block';started=1;lvBusy=0}
 
 if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
-const VERSION='v19 2026-11-19';let UPDNEW=false;
+const VERSION='v20 2026-11-19';let UPDNEW=false;
 function updUI(txt,cls,btn){document.querySelectorAll('.updt').forEach(e=>{e.textContent=txt;e.className='updt '+cls});document.querySelectorAll('.updb').forEach(e=>{e.textContent=btn})}
 async function checkUpdate(){updUI('Checking for updates...','','Please wait');
  try{const u=location.href.split('#')[0].split('?')[0],r=await fetch(u+'?nocache='+Date.now(),{cache:'no-store'}),t=await r.text(),m=t.match(/const VERSION='([^']*)'/);
@@ -261,7 +261,9 @@ function closeDev(){$('dv').style.display='none';if(devWas&&$('lvm').style.displ
 function devInfo(dt){fpsN++;fpsT+=dt;if(fpsT>=.5){fpsV=Math.round(fpsN/fpsT);fpsN=0;fpsT=0}
  $('dbg').textContent='FPS '+fpsV+'\nlevel '+lvInfo(LV).label+' | '+NAMES[THEME]+'\npos '+me.x.toFixed(1)+', '+me.y.toFixed(1)+' | map '+CW+'x'+CH+'\nenemies '+tc.length+' | items '+items.filter(i=>!gone.has(i.id)).length+'\nplayers '+P.length+' | lives '+me.l+' | stamina '+Math.round(me.st)}
 $('dvbtn').onclick=openDev;$('dvx').onclick=closeDev;if(devOn)$('dvbtn').style.display='block';
-{let n=0,t0d=0;document.querySelectorAll('.updt').forEach(e=>e.addEventListener('click',()=>{const t=Date.now();n=(t-t0d<1500)?n+1:1;t0d=t;if(n>=5){n=0;devOn=true;try{localStorage.setItem('bunkDev','1')}catch(x){}$('dvbtn').style.display='block';toast('Developer mode unlocked')}}))}
+function devUnlock(){devOn=true;try{localStorage.setItem('bunkDev','1')}catch(x){}$('dvbtn').style.display='block';toast('Developer mode unlocked. Tap the red DEV button.')}
+if(/[?&]dev\b/.test(location.search))devUnlock();
+{let n=0,t0d=0;document.querySelectorAll('.updt,#ov h1,#lvm h2').forEach(e=>e.addEventListener('click',()=>{const t=Date.now();n=(t-t0d<2000)?n+1:1;t0d=t;if(n>=5){n=0;devUnlock()}}))}
 function completeLevel(){UNL=Math.max(UNL,LV+1);try{localStorage.setItem('bunkUnl',UNL)}catch(e){}started=0;lvT=-1;$('lvb').style.display='none';showMenu()}
 function menuInfo(){const f=room?room.peers().filter(p=>!p.isMe&&p.presence&&(p.presence.lv||0)>0):[];
  $('lvf').textContent=room?(f.length?'Friends playing now: '+f.map(p=>'Level '+(p.presence.lv||1)).join(', '):'Team connected. No friend is in a level yet.'):(($('rc').value||'').trim()?'Connecting to your team...':'Solo mode');
@@ -651,7 +653,7 @@ function joinNet(code){return new Promise(res=>{
  c.on('message',(t,m)=>{const k=t.slice(base.length);if(k===id)return;try{store[k]={t:Date.now(),p:JSON.parse(m.toString())}}catch(e){}});
  c.on('error',()=>fin(null));setTimeout(()=>fin(null),9000)})}
 if(location.hash.length>1)$('rc').value=location.hash.slice(1);
-$('go').onclick=async()=>{const nm=($('nm').value.trim()||'Player').slice(0,12);RAWN=nm;ROOM=($('rc').value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'')||Math.random().toString(36).slice(2,8);spawnMe(nm);try{ac=ac||new AC();ac.resume();setTimeout(()=>bell(3),500)}catch(e){}
+$('go').onclick=async()=>{const nm=($('nm').value.trim()||'Player').slice(0,12);if(nm.toLowerCase()==='devmode')devUnlock();RAWN=nm;ROOM=($('rc').value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'')||Math.random().toString(36).slice(2,8);spawnMe(nm);try{ac=ac||new AC();ac.resume();setTimeout(()=>bell(3),500)}catch(e){}
  $('ov').style.display='none';showMenu();try{room=await joinNet(($('rc').value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,''))}catch(e){room=null}
  toast(room?'Team connected! Use chat to warn each other.':($('rc').value.trim()?'Could not connect to your team. Playing solo.':'Solo mode. Enter a room code to play with friends.'));
  if(room)room.presence(pres()).catch(()=>{})};
