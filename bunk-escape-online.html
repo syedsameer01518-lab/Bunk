@@ -86,9 +86,20 @@ button:active{transform:translateY(3px);background:linear-gradient(#ffe36a,#ffb3
 #mnb,#inv1{top:calc(70px + env(safe-area-inset-top,0px))!important}
 #tt{top:calc(122px + env(safe-area-inset-top,0px));left:8px;right:8px}
 #cl{top:calc(156px + env(safe-area-inset-top,0px))}
+
+/* developer tools */
+#dvbtn{display:none;position:fixed;left:calc(6px + env(safe-area-inset-left,0px));top:calc(118px + env(safe-area-inset-top,0px));z-index:7;height:28px;padding:0 10px;font-size:.65rem;background:linear-gradient(#ff9a8a,#e53935);box-shadow:inset 0 2px 0 #fff9,0 3px 0 #8f1b18,0 4px 8px #0006;text-shadow:0 1px 0 #8f1b18}
+#dv{display:none;position:fixed;inset:0;z-index:10;background:#0b1020f4;overflow:auto;padding:10px calc(10px + env(safe-area-inset-right,0px)) 30px;font-family:system-ui,sans-serif;color:#fff}
+.dvh{font-family:'Lilita One',system-ui,sans-serif;font-size:1.05rem;margin:12px 0 4px;color:#ffd54a;letter-spacing:.04em}
+.dvg{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.dvb{height:auto!important;width:auto!important;padding:8px 11px!important;font-size:.72rem!important;text-align:center}
+#dv input,#dv select{font:inherit;font-size:.8rem;padding:7px;border-radius:8px;border:0;width:90px}
+#dbg{display:none;position:fixed;left:6px;top:calc(152px + env(safe-area-inset-top,0px));z-index:3;font:11px/1.35 monospace;background:#000b;color:#9dff7a;padding:5px 8px;border-radius:8px;pointer-events:none;white-space:pre}
 </style></head><body>
 <canvas id="g3"></canvas><canvas id="c"></canvas>
 <canvas id="mm" width="216" height="216"></canvas>
+<button id="dvbtn">DEV</button><div id="dbg"></div>
+<div id="dv"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font-family:'Lilita One',system-ui,sans-serif;font-weight:400">Developer tools</h2><button class="dvb" id="dvx">Close</button></div><div id="dvbody"></div></div>
 <div id="hud"><div id="h1"></div><div id="bar"><i id="bi"></i></div><div id="h2"></div></div>
 <div id="tt"></div><div id="lvm" style="display:none;position:fixed;inset:0;z-index:6;background:#120f1df5;flex-direction:column;padding:10px 12px;gap:6px;overflow:hidden"><h2 style="margin:0;text-align:center">Select level</h2><p id="lvi" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><p id="lvf" style="margin:0;text-align:center;font-size:.8rem;opacity:.85"></p><div id="lvg" style="flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;align-content:start"></div><div class="updw"><span class="updt">Version</span><button class="updb sm">Check update</button></div>
 <div style="display:flex;gap:8px;justify-content:center"><button class="big" id="lvmore" style="margin:0">More levels</button><button class="big" id="inv2" style="margin:0;background:#25d366">Invite friends</button></div></div>
@@ -211,7 +222,7 @@ function startLevel(n){lvBusy=1;lvT=-1;LV=n;if(n>BESTLV){BESTLV=n;try{localStora
  $('lvm').style.display='none';toast(lvInfo(n).label+': '+NAMES[THEME]+'. '+tc.length+' enemies are out.');$('mm').style.display='block';started=1;lvBusy=0}
 
 if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
-const VERSION='v18 2026-11-19';let UPDNEW=false;
+const VERSION='v19 2026-11-19';let UPDNEW=false;
 function updUI(txt,cls,btn){document.querySelectorAll('.updt').forEach(e=>{e.textContent=txt;e.className='updt '+cls});document.querySelectorAll('.updb').forEach(e=>{e.textContent=btn})}
 async function checkUpdate(){updUI('Checking for updates...','','Please wait');
  try{const u=location.href.split('#')[0].split('?')[0],r=await fetch(u+'?nocache='+Date.now(),{cache:'no-store'}),t=await r.text(),m=t.match(/const VERSION='([^']*)'/);
@@ -220,6 +231,37 @@ async function checkUpdate(){updUI('Checking for updates...','','Please wait');
  catch(e){updUI('Version '+VERSION+' (could not check)','','Check again')}}
 function updClick(){if(UPDNEW)location.href=location.href.split('#')[0].split('?')[0]+'?u='+Date.now()+location.hash;else checkUpdate()}
 document.querySelectorAll('.updb').forEach(b=>{b.onclick=updClick});checkUpdate();
+const DEV={god:0,stam:0,spd:1,noclip:0,freeze:0,info:0,reveal:0};let devOn=false,devWas=0,dvc=-1,fpsN=0,fpsT=0,fpsV=0;
+try{devOn=localStorage.getItem('bunkDev')==='1'}catch(e){}
+function devBtn(p,l,f){const b=document.createElement('button');b.textContent=l;b.className='dvb';b.onclick=()=>f(b);p.appendChild(b);return b}
+function devTog(p,l,k){let b;const up=()=>{b.textContent=l+': '+(DEV[k]?'ON':'OFF');b.style.opacity=DEV[k]?1:.6};b=devBtn(p,'',()=>{DEV[k]=DEV[k]?0:1;up();if(k==='info')$('dbg').style.display=DEV.info?'block':'none'});up()}
+function tp(x,y){if(!me)return;me.x=x;me.y=y;me.j=0;me.jt=0;toast('Teleported')}
+function nearest(t){let b=null,d=1e9;items.forEach(i=>{if(i.t!==t||gone.has(i.id))return;const q=Math.hypot(i.x+.5-me.x,i.y+.5-me.y);if(q<d){d=q;b=i}});return b}
+function devBuild(){const w=$('dvbody');w.innerHTML='';
+ const sec=t=>{const h=document.createElement('div');h.textContent=t;h.className='dvh';w.appendChild(h);const g=document.createElement('div');g.className='dvg';w.appendChild(g);return g};
+ let g=sec('Cheats');devTog(g,'God mode (cannot be caught)','god');devTog(g,'Infinite stamina','stam');devTog(g,'Walk through walls','noclip');devTog(g,'Freeze enemies','freeze');devTog(g,'Show items and enemies on minimap','reveal');devTog(g,'Debug info','info');
+ devBtn(g,'Speed: x'+DEV.spd,b=>{DEV.spd=DEV.spd>=4?1:DEV.spd*2;b.textContent='Speed: x'+DEV.spd});
+ g=sec('Teleport');devBtn(g,'College start',()=>tp(SP[0][0]+.5,SP[0][1]+.5));devBtn(g,'Before the gate',()=>tp(10.5,24.5+YS));devBtn(g,'Outside the gate',()=>tp(10.5,26.5+YS));devBtn(g,'House',()=>tp(HX,HR0-.5));
+ devBtn(g,'Gate key',()=>{const k=nearest('key');if(k)tp(k.x+.5,k.y+.5);else toast('Key already taken')});
+ devBtn(g,'Nearest hammer',()=>{const k=nearest('ham');if(k)tp(k.x+.5,k.y+.5);else toast('No hammer left')});
+ devBtn(g,'Nearest ice block',()=>{const k=nearest('ice');if(k)tp(k.x+.5,k.y+.5);else toast('No ice left')});
+ devBtn(g,'Nearest bike',()=>{const k=nearest('bike');if(k)tp(k.x+.5,k.y+.5);else toast('No bike left')});
+ devBtn(g,'Next checkpoint',()=>{dvc=(dvc+1)%CP.length;tp(CP[dvc][0]+.5,CP[dvc][1]+.5)});
+ devBtn(g,'Next fire alarm',()=>{dvc=(dvc+1)%AL.length;tp(AL[dvc][0]+.5,AL[dvc][1]+1.2)});
+ g=sec('Give');devBtn(g,'Hammer',()=>{me.ham=1;toast('Got a hammer')});devBtn(g,'Gate key',()=>{me.k=1;toast('Got the key')});devBtn(g,'Shield',()=>{me.sh=1;toast('Shield on')});devBtn(g,'Full lives',()=>{me.l=3;toast('Lives 3/3')});devBtn(g,'Full stamina',()=>{me.st=100});
+ devBtn(g,'Bike (25s)',()=>{me.bike=25;toast('Bike!')});devBtn(g,'Invisible 10s',()=>{me.gh=10});
+ const sl=document.createElement('select');Object.keys(TL).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=TL[k][1];sl.appendChild(o)});g.appendChild(sl);devBtn(g,'Give tool',()=>{me.tool=sl.value;toast('Tool ready: '+TL[sl.value][1])});
+ g=sec('World');const th=document.createElement('select');NAMES.forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent=n;th.appendChild(o)});th.value=THEME;g.appendChild(th);devBtn(g,'Set weather/theme',()=>{THEME=+th.value;toast('Theme: '+NAMES[THEME])});
+ devBtn(g,'Ring fire alarm',()=>{me.al++;ev('alarm');toast('Alarm!')});devBtn(g,'Get out of class',()=>{if(me.j)release()});devBtn(g,'Complete level now',()=>{closeDev();completeLevel()});devBtn(g,'Restart this level',()=>{closeDev();startLevel(LV)});
+ g=sec('Levels');const li=document.createElement('input');li.type='number';li.min=1;li.value=LV;g.appendChild(li);devBtn(g,'Go to level',()=>{const n=Math.max(1,+li.value|0);closeDev();startLevel(n)});
+ devBtn(g,'Unlock all levels',()=>{UNL=999;try{localStorage.setItem('bunkUnl',999)}catch(e){}toast('All levels unlocked')});devBtn(g,'Reset progress',()=>{UNL=1;try{localStorage.setItem('bunkUnl',1)}catch(e){}toast('Progress reset')});
+ g=sec('Developer');devBtn(g,'Hide developer mode',()=>{devOn=false;try{localStorage.removeItem('bunkDev')}catch(e){}$('dvbtn').style.display='none';closeDev()})}
+function openDev(){devWas=started;started=0;devBuild();$('dv').style.display='block'}
+function closeDev(){$('dv').style.display='none';if(devWas&&$('lvm').style.display!=='flex')started=1}
+function devInfo(dt){fpsN++;fpsT+=dt;if(fpsT>=.5){fpsV=Math.round(fpsN/fpsT);fpsN=0;fpsT=0}
+ $('dbg').textContent='FPS '+fpsV+'\nlevel '+lvInfo(LV).label+' | '+NAMES[THEME]+'\npos '+me.x.toFixed(1)+', '+me.y.toFixed(1)+' | map '+CW+'x'+CH+'\nenemies '+tc.length+' | items '+items.filter(i=>!gone.has(i.id)).length+'\nplayers '+P.length+' | lives '+me.l+' | stamina '+Math.round(me.st)}
+$('dvbtn').onclick=openDev;$('dvx').onclick=closeDev;if(devOn)$('dvbtn').style.display='block';
+{let n=0,t0d=0;document.querySelectorAll('.updt').forEach(e=>e.addEventListener('click',()=>{const t=Date.now();n=(t-t0d<1500)?n+1:1;t0d=t;if(n>=5){n=0;devOn=true;try{localStorage.setItem('bunkDev','1')}catch(x){}$('dvbtn').style.display='block';toast('Developer mode unlocked')}}))}
 function completeLevel(){UNL=Math.max(UNL,LV+1);try{localStorage.setItem('bunkUnl',UNL)}catch(e){}started=0;lvT=-1;$('lvb').style.display='none';showMenu()}
 function menuInfo(){const f=room?room.peers().filter(p=>!p.isMe&&p.presence&&(p.presence.lv||0)>0):[];
  $('lvf').textContent=room?(f.length?'Friends playing now: '+f.map(p=>'Level '+(p.presence.lv||1)).join(', '):'Team connected. No friend is in a level yet.'):(($('rc').value||'').trim()?'Connecting to your team...':'Solo mode');
@@ -244,7 +286,7 @@ function pres(){const o={ver:VERSION,lv:LV,n:me.n,x:+me.x.toFixed(2),y:+me.y.toF
 function bfs(sx,sy,tx,ty,ban){const q=[[sx,sy]],par={},key=(a,b)=>a*256+b;par[key(sx,sy)]=-1;
  for(let qi=0;qi<q.length;qi++){const[a,b]=q[qi];if(a===tx&&b===ty)break;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=a+dx,ny=b+dy,k=key(nx,ny);if(par[k]===undefined&&ok(nx,ny,ban)){par[k]=key(a,b);q.push([nx,ny])}}}
  let k=key(tx,ty);if(par[k]===undefined)return null;let prev=k;while(par[k]!==-1&&par[k]!==key(sx,sy)){k=par[k]}return par[k]===-1?[sx,sy]:[Math.floor(k/256),k%256]}
-function simT(dt){exT-=dt;if(THEME===4&&exT<=0){exT=30;const pq=P.filter(p=>!p.presence.j&&!p.presence.esc);if(pq.length){const q=pq[Math.random()*pq.length|0].presence;tc.forEach(t=>{t.nz=8;t.nx=q.x;t.ny=q.y})}}
+function simT(dt){if(DEV.freeze)return;exT-=dt;if(THEME===4&&exT<=0){exT=30;const pq=P.filter(p=>!p.presence.j&&!p.presence.esc);if(pq.length){const q=pq[Math.random()*pq.length|0].presence;tc.forEach(t=>{t.nz=8;t.nx=q.x;t.ny=q.y})}}
  const el=(performance.now()-t0)/1000,mul=(1+Math.min(.5,el/600))*LM;
  P.forEach(p=>{const u=p.presence.u;if(u&&seenU[p.peer]!==u[0]){seenU[p.peer]=u[0];applyU(u)}});
  tc.forEach(t=>{t.nz=Math.max(0,t.nz-dt);if(t.st>0){t.st-=dt;return}
@@ -282,7 +324,7 @@ function caught(){if(me.sh){me.sh=0;me.inv=3;toast('Your lucky item saved you!')
  me.l--;sfx(150,.5,'sawtooth');if(me.l<=0){me.l=3;me.cp=me.sp.slice();me.tool=null;me.ham=0;toast('3rd catch! Back to the very start (in class first).')}else toast('Caught! You’re locked in class. Use USE to ring the alarm, or a friend can pull one.');
  const j=JS[Math.random()*4|0];me.x=j[0]+.5;me.y=j[1]+.5;me.j=1;me.jt=8}
 function canGo(px,py,gate){for(const[a,b]of[[-.28,-.28],[.28,-.28],[-.28,.28],[.28,.28]]){const tx=Math.floor(px+a),ty=Math.floor(py+b),c=(M[ty]||'')[tx];if(!c||c==='#'||TR.has(tx+','+ty)||(c==='G'&&!gate))return 0}return 1}
-function step(dt){
+function step(dt){if(DEV.stam&&me)me.st=100;
  ttT-=dt;if(ttT<0)$('tt').textContent='';
  if(me.j){me.jt-=dt;if(me.jt<=0)release();return}
  me.inv=Math.max(0,me.inv-dt);me.gh=Math.max(0,me.gh-dt);
@@ -290,16 +332,16 @@ function step(dt){
  if(me.esc)return;
  const FX=Math.cos(yaw),FZ=Math.sin(yaw);let vx=-jx*FZ-jy*FX,vy=jx*FX-jy*FZ;const m=Math.min(1,Math.hypot(vx,vy));if(m>.1){const n=Math.hypot(vx,vy);vx/=n;vy/=n}else{vx=vy=0}
  const moving=m>.15;if(me.st<=0)me.tired=1;if(me.st>30)me.tired=0;
- const run=runB&&moving&&!me.tired;let sp=(me.bike>0?8:run?6.2:3.8)*(me.tired?.55:1)*m;
+ const run=runB&&moving&&!me.tired;let sp=(me.bike>0?8:run?6.2:3.8)*(me.tired?.55:1)*m*DEV.spd;
  if(me.bike>0)me.st=Math.max(0,me.st-6*dt);else if(run)me.st=Math.max(0,me.st-20*dt);else me.st=Math.min(100,me.st+(moving?3:9)*dt);
  if(me.bike>0){me.bike-=dt;if(me.bike<=0||me.tired){me.bike=0;toast(['Puncture!','Out of petrol!','The chain fell off!'][Math.random()*3|0]+' Walk the rest of the way.')}}
  const gate=P.some(p=>p.presence.k)||me.k;
- const nx=me.x+vx*sp*dt,ny=me.y+vy*sp*dt;if(canGo(nx,me.y,gate))me.x=nx;if(canGo(me.x,ny,gate))me.y=ny;me.mvg=moving;if(moving)me.fa=Math.atan2(vx,vy);
- CAR.forEach(c=>{if((me.y|0)===c[0]&&Math.abs(carX(c)-me.x)<.9&&me.inv<=0){me.y=(RR.includes((me.y|0)-1)?(me.y|0)-1:(me.y|0))-.5;me.bike=0;me.st=Math.min(me.st,40);me.inv=3;toast('HONK! A car knocked you back to the pavement!');sfx(120,.4,'sawtooth')}});
+ const nx=me.x+vx*sp*dt,ny=me.y+vy*sp*dt;if(DEV.noclip||canGo(nx,me.y,gate))me.x=nx;if(DEV.noclip||canGo(me.x,ny,gate))me.y=ny;if(DEV.noclip){me.x=Math.max(.5,Math.min(CW-.5,me.x));me.y=Math.max(.5,Math.min(CH-.5,me.y))}me.mvg=moving;if(moving)me.fa=Math.atan2(vx,vy);
+ CAR.forEach(c=>{if((me.y|0)===c[0]&&Math.abs(carX(c)-me.x)<.9&&me.inv<=0&&!DEV.god){me.y=(RR.includes((me.y|0)-1)?(me.y|0)-1:(me.y|0))-.5;me.bike=0;me.st=Math.min(me.st,40);me.inv=3;toast('HONK! A car knocked you back to the pavement!');sfx(120,.4,'sawtooth')}});
  CP.forEach(c=>{if(Math.hypot(c[0]+.5-me.x,c[1]+.5-me.y)<1.2&&(me.cp[0]!==c[0]+.5||me.cp[1]!==c[1]+.5)){me.cp=[c[0]+.5,c[1]+.5];toast('Checkpoint saved!')}});
  if(M[me.y|0][me.x|0]==='G'&&!me.out){me.out=1;toast('Out of college! Cross the road carefully…')}
  if(M[me.y|0][me.x|0]==='H'){me.esc=1;toast('You reached home!')}
- if(me.inv<=0&&!me.gh&&M[me.y|0][me.x|0]!=='c')for(const t of drawT())if(!t.s&&Math.hypot(t.x-me.x,t.y-me.y)<.55){if(t.ty==='D'||t.ty==='N')outHit(t.ty);else caught();break}}
+ if(me.inv<=0&&!me.gh&&!DEV.god&&M[me.y|0][me.x|0]!=='c')for(const t of drawT())if(!t.s&&Math.hypot(t.x-me.x,t.y-me.y)<.55){if(t.ty==='D'||t.ty==='N')outHit(t.ty);else caught();break}}
 let tr=[];function drawT(){const hp=P.find(p=>p.peer===hostId());
  if(isHost()){tr=tc.map(t=>({x:t.x,y:t.y,ty:t.ty,c:t.ch,s:t.st>0}));return tr}
  const a=hp&&hp.presence.t;if(a)a.forEach((v,i)=>{const o=tr[i]||(tr[i]={x:v[0],y:v[1]});o.tx=v[0];o.ty2=v[1];o.x+=(v[0]-o.x)*.35;o.y+=(v[1]-o.y)*.35;o.ty=v[2];o.c=v[3]&1;o.s=!!(v[3]&2)});
@@ -357,9 +399,10 @@ function drawMini(){const c=$('mm'),g=c.getContext('2d'),S=c.width,R=17,tp=S/(2*
  for(let dy=-R-3;dy<=R+3;dy++)for(let dx=-R-3;dx<=R+3;dx++){const tx=x0+dx,ty=y0+dy,r=M[ty];if(!r)continue;const ch=r[tx];if(!ch)continue;g.fillStyle=ch==='#'?'#39406a':(COL[ch]||'#888');g.fillRect((tx-mx)*tp,(ty-my)*tp,tp+.6,tp+.6)}
  const dot=(x,y,col,r)=>{g.fillStyle=col;g.beginPath();g.arc((x-mx)*tp,(y-my)*tp,r,0,7);g.fill()};
  AL.forEach(a=>dot(a[0]+.5,a[1]+.5,'#ff3b30',4));CP.forEach(q=>dot(q[0]+.5,q[1]+.5,'#34c759',3.5));
- tr.forEach(o=>{if(Math.hypot(o.x-mx,o.y-my)<9)dot(o.x,o.y,o.ty==='D'?'#ff9500':'#ff2d55',4)});
+ tr.forEach(o=>{if(Math.hypot(o.x-mx,o.y-my)<(DEV.reveal?999:9))dot(o.x,o.y,o.ty==='D'?'#ff9500':'#ff2d55',4)});
  P.forEach(p=>{if(!p.isMe)dot(p.presence.x,p.presence.y,'#7cff6b',4.5)});
  if(mark)dot(mark[0],mark[1],'#ffffff',4);
+ if(DEV.reveal)items.forEach(it=>{if(!gone.has(it.id))dot(it.x+.5,it.y+.5,it.t==='key'?'#ffd23f':it.t==='ham'?'#ffffff':it.t==='bike'?'#00e5ff':'#80d8ff',3.5)});
  g.setTransform(1,0,0,1,0,0);
  const goal=(x,y,col,lab)=>{let dx=(x-mx)*tp,dy=(y-my)*tp;const sx0=dx*Math.cos(ang)-dy*Math.sin(ang),sy0=dx*Math.sin(ang)+dy*Math.cos(ang),d=Math.hypot(sx0,sy0),lim=S/2-14;let sx=sx0,sy=sy0;if(d>lim){sx*=lim/d;sy*=lim/d}
   g.fillStyle=col;g.beginPath();g.arc(S/2+sx,S/2+sy,9,0,7);g.fill();g.fillStyle='#fff';g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(lab,S/2+sx,S/2+sy+1)};
@@ -574,7 +617,7 @@ let last=0,pt=0;function loop(n){requestAnimationFrame(loop);if(!started)return;
  {const lb=$('lvb');if(lvT>=0){lb.style.display='flex';$('lvt').textContent='LEVEL '+LV+' COMPLETE';$('lvs').textContent='Next level in '+Math.ceil(lvT)+' s'}else if(lb.style.display!=='none')lb.style.display='none'}
  if(room&&!myPeer){const m=P.find(p=>p.isMe&&p.sameTab);if(m)myPeer=m.peer}
  P.forEach(p=>{if(p.presence.g)p.presence.g.forEach(i=>gone.add(i))});
- if(isHost())simT(dt);step(dt);alarmChk();chatUpd();hud();draw(n/1e3);drawMini();
+ if(isHost())simT(dt);step(dt);alarmChk();chatUpd();hud();draw(n/1e3);drawMini();if(DEV.info)devInfo(dt);
  pt+=dt;if(pt>.1){pt=0;if(room)room.presence(pres()).catch(()=>{})}}
 function bind(b,on,off){b.addEventListener('pointerdown',e=>{e.preventDefault();on()});if(off)['pointerup','pointerleave','pointercancel'].forEach(k=>b.addEventListener(k,off))}
 bind($('bu'),use);bind($('br'),()=>runB=1,()=>runB=0);bind($('bk'),useTool);bind($('bm'),showMap);
